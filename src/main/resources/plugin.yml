@@ -1,0 +1,7 @@
+main: com.rogue.plugintemplate.PluginTemplate
+name: ${project.name}
+prefix: PluginTemplate
+description: 1Rogue is a dummy and didn't fix his own template
+version: ${project.version}
+author: 1Rogue
+website: https://github.com/1Rogue
