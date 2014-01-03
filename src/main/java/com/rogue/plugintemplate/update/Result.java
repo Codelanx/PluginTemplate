@@ -23,52 +23,79 @@ import java.util.logging.Logger;
  * Result return type for the update checker
  *
  * @since 1.0.0
- * @author Rogue
+ * @author 1Rogue
  * @version 1.0.0
  */
 public enum Result {
     
     /** Successfully updated the jar file */
-    UPDATED {
-        @Override public void handleUpdate(Logger log) {
-            log.log(Level.INFO, "Plugin updated for next restart!");
-        }
-    },
+    UPDATED(Level.INFO, "Plugin updated for next restart!"),
     /** Update available, but not downloaded */
-    UPDATE_AVAILABLE {
-        @Override public void handleUpdate(Logger log) {
-            log.log(Level.INFO, "An update is available!");
-        }
-    },
+    UPDATE_AVAILABLE(Level.INFO, "An update is available!"),
     /** No update is available */
-    NO_UPDATE {
-        @Override public void handleUpdate(Logger log) {
-            log.log(Level.INFO, "Plugin is up to date!");
-        }
-    },
+    NO_UPDATE(Level.INFO, "Plugin is up to date!"),
     /** Error in updater: bad plugin id provided */
-    ERROR_BADID {
-        @Override public void handleUpdate(Logger log) {
-            log.log(Level.SEVERE, "Invalid plugin ID provided!");
-        }
-    },
+    ERROR_BADID(Level.SEVERE, "Invalid plugin ID provided!"),
     /** No file found when attempting to download a new version */
-    ERROR_FILENOTFOUND {
-        @Override public void handleUpdate(Logger log) {
-            log.log(Level.SEVERE, "Could not locate latest version!");
-        }
-    },
+    ERROR_FILENOTFOUND(Level.SEVERE, "Could not locate latest version!"),
     /** Error in updater: bad plugin api key */
-    ERROR_APIKEY {
-        @Override public void handleUpdate(Logger log) {
-            log.log(Level.SEVERE, "Bad plugin API key provided!");
-        }
-    },
-    /** Updating disabled (shouldn't occur) */
-    DISABLED {
-        @Override public void handleUpdate(Logger log) {}
-    };
+    ERROR_APIKEY(Level.SEVERE, "Bad plugin API key provided!"),
+    /** Update check has not completed yet */
+    INCOMPLETE(Level.WARNING, "Update check has not completed yet");
     
-    public abstract void handleUpdate(Logger log);
+    /** The level that the message would be logged at */
+    private final Level level;
+    /** The message for the logger */
+    private final String message;
+    
+    /**
+     * Private constructor for {@link Result}
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @param level The level to log messages at
+     * @param message The message to log
+     */
+    private Result(Level level, String message) {
+        this.level = level;
+        this.message = message;
+    }
+    
+    /**
+     * Logs the appropriate message
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @param log The logger to log to
+     */
+    public void handleUpdate(Logger log) {
+        log.log(this.level, this.message);
+    }
+    
+    /**
+     * The message this Result is represented by
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @return The message for this {@link Result}
+     */
+    public String getMessage() {
+        return this.message;
+    }
+    
+    /**
+     * The {@link Level} for this message, used in the logging process
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @return The {@link Level} for this message
+     */
+    public Level getLogLevel() {
+        return this.level;
+    }
     
 }
