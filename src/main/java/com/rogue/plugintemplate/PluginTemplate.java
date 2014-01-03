@@ -20,36 +20,35 @@ import com.rogue.plugintemplate.command.CommandHandler;
 import com.rogue.plugintemplate.metrics.Metrics;
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
+ * Main {@link JavaPlugin} class
  *
  * @since 1.0.0
  * @author 1Rogue
  * @version 1.0.0
- * 
  */
 public class PluginTemplate extends JavaPlugin {
     
+    private static String NAME;
     private CommandHandler chandle;
 
     /**
-     * Loads configuration // No use yet
+     * Loads informational and configurable aspects of {@link PluginTemplate}
      *
      * @since 1.0.0
      * @version 1.0.0
      */
     @Override
     public void onLoad() {
-        
-        
+        PluginTemplate.NAME = this.getDescription().getFullName();
     }
 
     /**
-     * Enables stuff
+     * Enables the separate modules and managers of {@link PluginTemplate}
      *
      * @since 1.0.0
      * @version 1.0.0
@@ -69,14 +68,13 @@ public class PluginTemplate extends JavaPlugin {
     }
 
     /**
-     * No use yet.
+     * Cleans up plugin resources
      *
      * @since 1.0.0
      * @version 1.0.0
      */
     @Override
     public void onDisable() {
-        this.getLogger().log(Level.INFO, "{0} is disabled!", this.getName());
     }
 
     /**
@@ -88,7 +86,7 @@ public class PluginTemplate extends JavaPlugin {
      * @return The plugin instance
      */
     public static PluginTemplate getPlugin() {
-        return (PluginTemplate) Bukkit.getServer().getPluginManager().getPlugin("PluginTemplate");
+        return (PluginTemplate) Bukkit.getServer().getPluginManager().getPlugin(PluginTemplate.NAME);
     }
     
     /**
@@ -104,4 +102,5 @@ public class PluginTemplate extends JavaPlugin {
     public CommandHandler getCommandHandler() {
         return this.chandle;
     }
+    
 }
