@@ -94,6 +94,7 @@ public class PluginTemplate extends JavaPlugin {
      */
     @Override
     public void onDisable() {
+        this.listener.cleanup();
     }
 
     /**

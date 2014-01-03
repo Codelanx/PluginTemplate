@@ -20,6 +20,7 @@ import com.rogue.plugintemplate.PluginTemplate;
 import com.rogue.plugintemplate.listener.listeners.*;
 import java.util.HashMap;
 import java.util.Map;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
 /**
@@ -84,5 +85,15 @@ public class ListenerManager {
         } else {
             throw new ListenerReregisterException("Listener Map already contains key: " + name);
         }
+    }
+    
+    /**
+     * Unregisters all the listeners attached to {@link PluginTemplate}
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     */
+    public void cleanup() {
+        HandlerList.unregisterAll(this.plugin);
     }
 }
