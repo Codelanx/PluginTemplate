@@ -17,7 +17,12 @@
 package com.rogue.plugintemplate;
 
 import com.rogue.plugintemplate.command.CommandHandler;
+import com.rogue.plugintemplate.config.ConfigValues;
+import com.rogue.plugintemplate.config.ConfigurationLoader;
+import com.rogue.plugintemplate.listener.ListenerManager;
 import com.rogue.plugintemplate.metrics.Metrics;
+import com.rogue.plugintemplate.update.Choice;
+import com.rogue.plugintemplate.update.UpdateHandler;
 import java.io.IOException;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
@@ -35,6 +40,9 @@ public class PluginTemplate extends JavaPlugin {
     
     private static String NAME;
     private CommandHandler chandle;
+    private ConfigurationLoader cloader;
+    private ListenerManager listener;
+    private UpdateHandler update;
 
     /**
      * Loads informational and configurable aspects of {@link PluginTemplate}
@@ -45,6 +53,9 @@ public class PluginTemplate extends JavaPlugin {
     @Override
     public void onLoad() {
         PluginTemplate.NAME = this.getDescription().getFullName();
+        
+        this.getLogger().log(Level.INFO, "Loading configuration...");
+        this.cloader = new ConfigurationLoader(this);
     }
 
     /**
@@ -63,8 +74,16 @@ public class PluginTemplate extends JavaPlugin {
             this.getLogger().log(Level.SEVERE, "Error enabling metrics!", ex);
         }
         
+        this.getLogger().log(Level.INFO, "Enabling listeners...");
+        this.listener = new ListenerManager(this);
+        
         this.getLogger().log(Level.INFO, "Enabling command handler...");
         this.chandle = new CommandHandler(this);
+        
+        this.getLogger().log(Level.INFO, "Evaluating update checks...");
+        boolean check = this.cloader.getBoolean(ConfigValues.UPDATE_CHECK);
+        boolean dl = this.cloader.getBoolean(ConfigValues.UPDATE_DOWNLOAD);
+        this.update = new UpdateHandler(this, Choice.getChoice(check, dl));
     }
 
     /**
@@ -99,8 +118,52 @@ public class PluginTemplate extends JavaPlugin {
         return ChatColor.translateAlternateColorCodes('&', encoded);
     }
     
+    /**
+     * Gets the {@link CommandHandler} for {@link PluginTemplate}
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @return The {@link CommandHandler} instance
+     */
     public CommandHandler getCommandHandler() {
         return this.chandle;
+    }
+    
+    /**
+     * Gets the {@link ConfigurationLoader} for {@link PluginTemplate}
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @return The {@link ConfigurationLoader} instance
+     */
+    public ConfigurationLoader getConfiguration() {
+        return this.cloader;
+    }
+    
+    /**
+     * Gets the {@link ListenerManager} for {@link PluginTemplate}
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @return The {@link ListenerManager} instance
+     */
+    public ListenerManager getListenerManager() {
+        return this.listener;
+    }
+    
+    /**
+     * Gets the {@link UpdateHandler} for {@link PluginTemplate}
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @return The {@link UpdateHandler} instance
+     */
+    public UpdateHandler getUpdateHandler() {
+        return this.update;
     }
     
 }
