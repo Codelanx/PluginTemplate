@@ -26,6 +26,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import org.bukkit.plugin.Plugin;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 /**
  * Handles the update process for {@link PluginTemplate}
@@ -35,17 +38,18 @@ import org.bukkit.plugin.Plugin;
  * @version 1.0.0
  */
 public class UpdateHandler {
-    
+
     protected final PluginTemplate plugin;
     protected final Choice choice;
+    protected Result result = Result.INCOMPLETE;
     protected byte debug = 0;
-    
+
     /**
      * Constructor for {@link UpdateHandler}
-     * 
+     *
      * @since 1.0.0
      * @version 1.0.0
-     * 
+     *
      * @param plugin The main {@link PluginTemplate} instance
      * @param choice The downloading option to use
      */
@@ -56,15 +60,16 @@ public class UpdateHandler {
                 new UpdateRunnable(this.plugin, choice),
                 10L);
     }
-    
+
     protected void handleUpdate(Result result) {
+        this.result = result;
         if (result == Result.UPDATE_AVAILABLE) {
             this.registerNewNotifier();
         } else {
             result.handleUpdate(this.plugin.getLogger());
         }
     }
-    
+
     protected void registerNewNotifier() {
         this.plugin.getListenerManager().registerListener("update",
                 new UpdateListener("A new update is available for "
@@ -72,6 +77,10 @@ public class UpdateHandler {
                         + "!"));
     }
     
+    public Result getUpdateStatus() {
+        return this.result;
+    }
+
     public void setDebug(byte debug) {
         this.debug = debug;
     }
@@ -80,7 +89,7 @@ public class UpdateHandler {
 
 /**
  * Runs an update check
- * 
+ *
  * TODO: Move to DBO and Curse API
  *
  * @since 1.0.0
@@ -88,85 +97,152 @@ public class UpdateHandler {
  * @version 1.0.0
  */
 class UpdateRunnable extends UpdateHandler implements Runnable {
-    
-    private final String VERSION_URL = "https://raw.github.com/1Rogue/PluginTemplate/master/VERSION";
-    private Result result;
-    
+
+    private final String VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=";
+    private final String DL_URL = "downloadURL";
+    private final String DL_FILE = "fileName";
+    private final String DL_NAME = "name";
+    private JSONObject latest;
+
     /**
      * Constructor for {@link UpdateRunnable}
-     * 
+     *
      * @since 1.0.0
      * @version 1.0.0
-     * 
+     *
      * @param plugin The {@link PluginTemplate} instance
      * @param choice The {@link Choice} for downloading
      */
     public UpdateRunnable(PluginTemplate plugin, Choice choice) {
         super(plugin, choice);
+        this.result = Result.NO_UPDATE;
     }
 
     /**
      * Runs the update process
-     * 
+     *
      * @since 1.0.0
      * @version 1.0.0
      */
     public void run() {
         boolean current = false;
-        if (this.choice.doCheck()) {
-            current = this.checkVersion();
-        }
-        if (this.choice.doDownload() && !current) {
-            this.handleUpdate(this.downloadJar());
-        } else {
-            if (current) {
-                this.handleUpdate(Result.NO_UPDATE);
-            } else {
-                this.handleUpdate(Result.UPDATE_AVAILABLE);
+        if (!this.choice.equals(Choice.NO_UPDATE)) {
+            this.getJSON();
+            if (this.latest != null) {
+                if (this.choice.doCheck()) {
+                    this.checkVersion();
+                }
+                if (this.choice.doDownload() && this.result == Result.UPDATE_AVAILABLE) {
+                    this.downloadJar();
+                }
             }
         }
-        
+        this.handleUpdate(this.result);
     }
-    
+
     /**
      * Downloads the latest jarfile for the {@link Plugin}
-     * 
+     *
      * @since 1.0.0
      * @version 1.0.0
-     * 
+     *
      * @return The download result
      */
     public Result downloadJar() {
         File updateFolder = this.plugin.getServer().getUpdateFolderFile();
         //TODO: Add support
-        return Result.DISABLED;
+        return Result.UPDATED;
+    }
+
+    /**
+     * Checks the current {@link Plugin} version against the latest live version
+     *
+     * @since 1.0.0
+     * @version 1.0.0
+     *
+     * @return True if {@link PluginTemplate} is latest version, false otherwise
+     */
+    public boolean checkVersion() {
+        String curVersion = this.plugin.getDescription().getVersion();
+        String file = (String) this.latest.get(this.DL_NAME);
+        String last = file.substring(file.lastIndexOf("-"), file.length());
+        return !newVersion(curVersion, last);
     }
     
     /**
-     * Checks the current {@link Plugin} version against the latest live version
+     * Compares two string versions to determine which is newer. Keep in mind
+     * that conventions of different lengths are considered. The default approach
+     * is that if both numbers are the same up until the extraneous number, the
+     * longer version will be considered "newer". For example:
+     * <ul>
+     *   <li> 1.2.3 </li>
+     *   <li> 1.2.3.1 </li>
+     * </ul>
+     * 
+     * <p>The second option would be considered "newer". Keep in mind if the
+     * second example was "1.2.3.0", it would still be considered newer.</p>
      * 
      * @since 1.0.0
      * @version 1.0.0
      * 
-     * @return True if plugin is latest version, false otherwise
+     * @param v1 The original version
+     * @param v2 The new version to compare
+     * @return True if v2 is newer, false otherwise
      */
-    public boolean checkVersion() {
-        boolean current = true;
-        String curVersion = this.plugin.getDescription().getVersion();
+    private boolean newVersion(String v1, String v2) {
+        String[] v1tot = v1.split(".");
+        String[] v2tot = v2.split(".");
+        for (int i = 0; i < v1tot.length && i < v2tot.length; i++ ) {
+            if (this.getInt(v1tot[i]) < this.getInt(v2tot[i])) {
+                return true;
+            }
+        }
+        if (v1tot.length != v2tot.length) {
+            return v1tot.length < v2tot.length;
+        }
+        return false;
+    }
+    
+    /**
+     * Gets an integer from a string, or returns 0 if it is not a number
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @param s The string to convert
+     * @return The numeric value, or 0 if there is no comprehensible value
+     */
+    private int getInt(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
+    /**
+     * Gets the {@link JSONObject} from the CurseAPI of the newest project version.
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     */
+    private void getJSON() {
         InputStream stream = null;
         InputStreamReader isr = null;
         BufferedReader reader = null;
+        String json = null;
         try {
-            URL call = new URL(this.VERSION_URL);
+            URL call = new URL(this.VERSION_URL + 43083); // TODO: Figure out how to dynamically work with ID
             stream = call.openStream();
             isr = new InputStreamReader(stream);
             reader = new BufferedReader(isr);
-            String latest = reader.readLine();
-            current = latest.equalsIgnoreCase(curVersion);
+            json = reader.readLine();
         } catch (MalformedURLException ex) {
             plugin.getLogger().log(Level.SEVERE,
                     "Error checking for an update",
                     this.debug >= 3 ? ex : "");
+            this.result = Result.ERROR_BADID;
+            this.latest = null;
         } catch (IOException ex) {
             plugin.getLogger().log(Level.SEVERE,
                     "Error checking for an update",
@@ -188,7 +264,12 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
                         this.debug >= 3 ? ex : "");
             }
         }
-        return current;
+        if (json != null) {
+            JSONArray arr = (JSONArray) JSONValue.parse(json);
+            this.latest = (JSONObject) arr.get(arr.size() - 1);
+        } else {
+            this.latest = null;
+        }
     }
 
 }

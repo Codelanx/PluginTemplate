@@ -37,7 +37,7 @@ public enum Result {
     /** Error in updater: bad plugin id provided */
     ERROR_BADID(Level.SEVERE, "Invalid plugin ID provided!"),
     /** No file found when attempting to download a new version */
-    ERROR_FILENOTFOUND(Level.SEVERE, "Could not locate latest version!"),
+    ERROR_FILENOTFOUND(Level.SEVERE, "Could not download the newest version!"),
     /** Error in updater: bad plugin api key */
     ERROR_APIKEY(Level.SEVERE, "Bad plugin API key provided!"),
     /** Update check has not completed yet */

@@ -20,7 +20,7 @@ package com.rogue.plugintemplate.update;
  * Provides the updater with the correct update options based on configuration
  *
  * @since 1.0.0
- * @author Rogue
+ * @author 1Rogue
  * @version 1.0.0
  */
 public enum Choice {
