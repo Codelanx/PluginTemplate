@@ -56,8 +56,9 @@ public class UpdateHandler {
     public UpdateHandler(PluginTemplate plugin, Choice choice) {
         this.plugin = plugin;
         this.choice = choice;
+        int id = 43083; //TODO: parse id
         this.plugin.getServer().getScheduler().runTaskLater(this.plugin,
-                new UpdateRunnable(this.plugin, choice),
+                new UpdateRunnable(this.plugin, choice, id),
                 10L);
     }
 
@@ -98,7 +99,7 @@ public class UpdateHandler {
  */
 class UpdateRunnable extends UpdateHandler implements Runnable {
 
-    private final String VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=";
+    private final String VERSION_URL;
     private final String DL_URL = "downloadURL";
     private final String DL_FILE = "fileName";
     private final String DL_NAME = "name";
@@ -113,9 +114,10 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
      * @param plugin The {@link PluginTemplate} instance
      * @param choice The {@link Choice} for downloading
      */
-    public UpdateRunnable(PluginTemplate plugin, Choice choice) {
+    public UpdateRunnable(PluginTemplate plugin, Choice choice, int id) {
         super(plugin, choice);
         this.result = Result.NO_UPDATE;
+        this.VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=" + id;
     }
 
     /**
@@ -232,7 +234,7 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
         BufferedReader reader = null;
         String json = null;
         try {
-            URL call = new URL(this.VERSION_URL + 43083); // TODO: Figure out how to dynamically work with ID
+            URL call = new URL(this.VERSION_URL);
             stream = call.openStream();
             isr = new InputStreamReader(stream);
             reader = new BufferedReader(isr);
