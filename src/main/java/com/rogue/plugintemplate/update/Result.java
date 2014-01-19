@@ -38,8 +38,8 @@ public enum Result {
     ERROR_BADID(Level.SEVERE, "Invalid plugin ID provided!"),
     /** No file found when attempting to download a new version */
     ERROR_FILENOTFOUND(Level.SEVERE, "Could not download the newest version!"),
-    /** Error in updater: bad plugin api key */
-    ERROR_APIKEY(Level.SEVERE, "Bad plugin API key provided!"),
+    /** Failure to download the plugin completely */
+    ERROR_DOWNLOAD_FAILED(Level.SEVERE, "Failed to download new version!"),
     /** Update check has not completed yet */
     INCOMPLETE(Level.WARNING, "Update check has not completed yet");
     

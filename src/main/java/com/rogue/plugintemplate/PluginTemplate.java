@@ -38,6 +38,7 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class PluginTemplate extends JavaPlugin {
     
+    private final int ID = 0; // curse plugin id, needs to be set
     private static String NAME;
     private CommandHandler chandle;
     private ConfigurationLoader cloader;
@@ -83,7 +84,7 @@ public class PluginTemplate extends JavaPlugin {
         this.getLogger().log(Level.INFO, "Evaluating update checks...");
         boolean check = this.cloader.getBoolean(ConfigValues.UPDATE_CHECK);
         boolean dl = this.cloader.getBoolean(ConfigValues.UPDATE_DOWNLOAD);
-        this.update = new UpdateHandler(this, Choice.getChoice(check, dl));
+        this.update = new UpdateHandler(this, Choice.getChoice(check, dl), this.ID, this.getFile().getName());
     }
 
     /**

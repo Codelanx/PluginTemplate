@@ -67,6 +67,19 @@ public class ListenerManager {
     public Listener getListener(String name) {
         return this.listeners.get(name);
     }
+    
+    /**
+     * Returns whether or not a listener is registered under the relevant listener key
+     * 
+     * @since 1.0.0
+     * @version 1.0.0
+     * 
+     * @param name The key to look for
+     * @return <code>true</code> if registered, <code>false</code> otherwise
+     */
+    public boolean isRegistered(String name) {
+        return this.listeners.containsKey(name);
+    }
 
     /**
      * Registers a listener through bukkit and {@link ListenerManager}

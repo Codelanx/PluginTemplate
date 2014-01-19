@@ -19,12 +19,16 @@ package com.rogue.plugintemplate.update;
 import com.rogue.plugintemplate.PluginTemplate;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.plugin.Plugin;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -42,6 +46,8 @@ public class UpdateHandler {
     protected final PluginTemplate plugin;
     protected final Choice choice;
     protected Result result = Result.INCOMPLETE;
+    protected final String file;
+    protected final int id;
     protected byte debug = 0;
 
     /**
@@ -52,17 +58,20 @@ public class UpdateHandler {
      *
      * @param plugin The main {@link PluginTemplate} instance
      * @param choice The downloading option to use
+     * @param id The project id
+     * @param file The name of the current plugin file
      */
-    public UpdateHandler(PluginTemplate plugin, Choice choice) {
+    public UpdateHandler(PluginTemplate plugin, Choice choice, int id, String file) {
         this.plugin = plugin;
         this.choice = choice;
-        int id = 43083; //TODO: parse id
+        this.id = id;
+        this.file = file;
         this.plugin.getServer().getScheduler().runTaskLater(this.plugin,
-                new UpdateRunnable(this.plugin, choice, id),
+                new UpdateRunnable(this.plugin, choice, this.id, this.file),
                 10L);
     }
 
-    protected void handleUpdate(Result result) {
+    protected final void handleUpdate(Result result) {
         this.result = result;
         if (result == Result.UPDATE_AVAILABLE) {
             this.registerNewNotifier();
@@ -71,18 +80,18 @@ public class UpdateHandler {
         }
     }
 
-    protected void registerNewNotifier() {
+    protected final void registerNewNotifier() {
         this.plugin.getListenerManager().registerListener("update",
                 new UpdateListener("A new update is available for "
                         + this.plugin.getDescription().getFullName()
                         + "!"));
     }
     
-    public Result getUpdateStatus() {
+    public final Result getUpdateStatus() {
         return this.result;
     }
 
-    public void setDebug(byte debug) {
+    public final void setDebug(byte debug) {
         this.debug = debug;
     }
 
@@ -113,9 +122,11 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
      *
      * @param plugin The {@link PluginTemplate} instance
      * @param choice The {@link Choice} for downloading
+     * @param id The project id
+     * @param file The name of the plugin file
      */
-    public UpdateRunnable(PluginTemplate plugin, Choice choice, int id) {
-        super(plugin, choice);
+    public UpdateRunnable(PluginTemplate plugin, Choice choice, int id, String file) {
+        super(plugin, choice, id, file);
         this.result = Result.NO_UPDATE;
         this.VERSION_URL = "https://api.curseforge.com/servermods/files?projectIds=" + id;
     }
@@ -135,7 +146,7 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
                     this.checkVersion();
                 }
                 if (this.choice.doDownload() && this.result == Result.UPDATE_AVAILABLE) {
-                    this.downloadJar();
+                    this.download();
                 }
             }
         }
@@ -148,12 +159,39 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
      * @since 1.0.0
      * @version 1.0.0
      *
+     * @TODO Add zip file support
      * @return The download result
      */
-    public Result downloadJar() {
+    public Result download() {
+        Result back = Result.UPDATED;
         File updateFolder = this.plugin.getServer().getUpdateFolderFile();
-        //TODO: Add support
-        return Result.UPDATED;
+        String url = (String) this.latest.get(this.DL_URL);
+        ReadableByteChannel rbc = null;
+        FileOutputStream fos = null;
+        try {
+            URL call = new URL(url);
+            rbc = Channels.newChannel(call.openStream());
+            fos = new FileOutputStream(this.file);
+            fos.getChannel().transferFrom(rbc, 0, 1 << 24);
+        } catch (MalformedURLException ex) {
+            this.plugin.getLogger().log(Level.SEVERE, "Error finding plugin update to download!", ex);
+            back = Result.ERROR_FILENOTFOUND;
+        } catch (IOException ex) {
+            this.plugin.getLogger().log(Level.SEVERE, "Error transferring plugin data!", ex);
+            back = Result.ERROR_DOWNLOAD_FAILED;
+        } finally {
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+                if (rbc != null) {
+                    rbc.close();
+                }
+            } catch (IOException ex) {
+                this.plugin.getLogger().log(Level.SEVERE, "Error closing streams/channels for download!", ex);
+            }
+        }
+        return back;
     }
 
     /**
