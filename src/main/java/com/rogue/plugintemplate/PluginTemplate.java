@@ -44,6 +44,7 @@ public class PluginTemplate extends JavaPlugin {
     private ConfigurationLoader cloader;
     private ListenerManager listener;
     private UpdateHandler update;
+    private final byte debug = 3; //TODO: load from config
 
     /**
      * Loads informational and configurable aspects of {@link PluginTemplate}
@@ -85,6 +86,8 @@ public class PluginTemplate extends JavaPlugin {
         boolean check = this.cloader.getBoolean(ConfigValues.UPDATE_CHECK);
         boolean dl = this.cloader.getBoolean(ConfigValues.UPDATE_DOWNLOAD);
         this.update = new UpdateHandler(this, Choice.getChoice(check, dl), this.ID, this.getFile().getName());
+        this.update.setDebug(this.debug);
+        this.update.runCheck();
     }
 
     /**

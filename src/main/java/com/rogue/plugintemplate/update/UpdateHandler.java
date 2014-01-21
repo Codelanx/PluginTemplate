@@ -28,7 +28,6 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.plugin.Plugin;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -37,9 +36,9 @@ import org.json.simple.JSONValue;
 /**
  * Handles the update process for {@link PluginTemplate}
  *
- * @since 1.0.0
+ * @since 1.4.5
  * @author 1Rogue
- * @version 1.0.0
+ * @version 1.4.5
  */
 public class UpdateHandler {
 
@@ -53,8 +52,8 @@ public class UpdateHandler {
     /**
      * Constructor for {@link UpdateHandler}
      *
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      *
      * @param plugin The main {@link PluginTemplate} instance
      * @param choice The downloading option to use
@@ -66,11 +65,30 @@ public class UpdateHandler {
         this.choice = choice;
         this.id = id;
         this.file = file;
+    }
+    
+    /**
+     * Runs an update check. Should only be called once (have not made a good work-around yet)
+     * 
+     * @since 1.4.5
+     * @version 1.4.5
+     */
+    public void runCheck() {
+        UpdateRunnable ur = new UpdateRunnable(this.plugin, choice, this.id, this.file);
+        ur.setDebug(this.debug);
         this.plugin.getServer().getScheduler().runTaskLater(this.plugin,
-                new UpdateRunnable(this.plugin, choice, this.id, this.file),
+                ur,
                 10L);
     }
 
+    /**
+     * Handles the appropriate response to an update {@link Result}
+     * 
+     * @since 1.4.5
+     * @version 1.4.5
+     * 
+     * @param result The update {@link Result}
+     */
     protected final void handleUpdate(Result result) {
         this.result = result;
         if (result == Result.UPDATE_AVAILABLE) {
@@ -80,6 +98,12 @@ public class UpdateHandler {
         }
     }
 
+    /**
+     * Registers a new {@link UpdateListener} about an available update
+     * 
+     * @since 1.4.5
+     * @version 1.4.5
+     */
     protected final void registerNewNotifier() {
         this.plugin.getListenerManager().registerListener("update",
                 new UpdateListener("A new update is available for "
@@ -87,10 +111,26 @@ public class UpdateHandler {
                         + "!"));
     }
     
+    /**
+     * Returns the {@link Result} from the update check
+     * 
+     * @since 1.4.5
+     * @version 1.4.5
+     * 
+     * @return The update {@link Result}
+     */
     public final Result getUpdateStatus() {
         return this.result;
     }
 
+    /**
+     * Sets the debug level of this update check
+     * 
+     * @since 1.4.5
+     * @version 1.4.5
+     * 
+     * @param debug The debug level to set
+     */
     public final void setDebug(byte debug) {
         this.debug = debug;
     }
@@ -100,16 +140,14 @@ public class UpdateHandler {
 /**
  * Runs an update check
  *
- * TODO: Move to DBO and Curse API
- *
- * @since 1.0.0
+ * @since 1.4.5
  * @author 1Rogue
- * @version 1.0.0
+ * @version 1.4.5
  */
 class UpdateRunnable extends UpdateHandler implements Runnable {
 
     private final String VERSION_URL;
-    private final String DL_URL = "downloadURL";
+    private final String DL_URL = "downloadUrl";
     private final String DL_FILE = "fileName";
     private final String DL_NAME = "name";
     private JSONObject latest;
@@ -117,8 +155,8 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
     /**
      * Constructor for {@link UpdateRunnable}
      *
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      *
      * @param plugin The {@link PluginTemplate} instance
      * @param choice The {@link Choice} for downloading
@@ -134,8 +172,8 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
     /**
      * Runs the update process
      *
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      */
     public void run() {
         boolean current = false;
@@ -143,10 +181,10 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
             this.getJSON();
             if (this.latest != null) {
                 if (this.choice.doCheck()) {
-                    this.checkVersion();
+                    this.result = this.checkVersion();
                 }
                 if (this.choice.doDownload() && this.result == Result.UPDATE_AVAILABLE) {
-                    this.download();
+                    this.result = this.download();
                 }
             }
         }
@@ -156,22 +194,24 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
     /**
      * Downloads the latest jarfile for the {@link Plugin}
      *
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      *
      * @TODO Add zip file support
      * @return The download result
      */
     public Result download() {
         Result back = Result.UPDATED;
-        File updateFolder = this.plugin.getServer().getUpdateFolderFile();
+        File updateLoc = this.plugin.getServer().getUpdateFolderFile();
+        updateLoc.mkdirs();
         String url = (String) this.latest.get(this.DL_URL);
+        File location = new File(updateLoc, this.file);
         ReadableByteChannel rbc = null;
         FileOutputStream fos = null;
         try {
             URL call = new URL(url);
             rbc = Channels.newChannel(call.openStream());
-            fos = new FileOutputStream(this.file);
+            fos = new FileOutputStream(location);
             fos.getChannel().transferFrom(rbc, 0, 1 << 24);
         } catch (MalformedURLException ex) {
             this.plugin.getLogger().log(Level.SEVERE, "Error finding plugin update to download!", ex);
@@ -197,16 +237,20 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
     /**
      * Checks the current {@link Plugin} version against the latest live version
      *
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      *
-     * @return True if {@link PluginTemplate} is latest version, false otherwise
+     * @return The {@link Result} of the version check
      */
-    public boolean checkVersion() {
+    private Result checkVersion() {
+        Result back = Result.NO_UPDATE;
         String curVersion = this.plugin.getDescription().getVersion();
         String file = (String) this.latest.get(this.DL_NAME);
-        String last = file.substring(file.lastIndexOf("-"), file.length());
-        return !newVersion(curVersion, last);
+        String last = file.substring(file.lastIndexOf("-") + 1, file.length());
+        if (newVersion(curVersion, last)) {
+            back = Result.UPDATE_AVAILABLE;
+        }
+        return back;
     }
     
     /**
@@ -222,21 +266,26 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
      * <p>The second option would be considered "newer". Keep in mind if the
      * second example was "1.2.3.0", it would still be considered newer.</p>
      * 
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      * 
      * @param v1 The original version
      * @param v2 The new version to compare
      * @return True if v2 is newer, false otherwise
      */
     private boolean newVersion(String v1, String v2) {
-        String[] v1tot = v1.split(".");
-        String[] v2tot = v2.split(".");
-        for (int i = 0; i < v1tot.length && i < v2tot.length; i++ ) {
+        this.plugin.getLogger().log(Level.INFO, "Original version: {0}", v1);
+        this.plugin.getLogger().log(Level.INFO, "New version: {0}", v2);
+        String[] v1tot = v1.split("\\.");
+        String[] v2tot = v2.split("\\.");
+        this.plugin.getLogger().log(Level.INFO, "Running check loop...");
+        for (int i = 0; i < v1tot.length && i < v2tot.length; i++) {
+            this.plugin.getLogger().log(Level.INFO, "Comparing {0} to {1}", new String[]{v1tot[i], v2tot[i]});
             if (this.getInt(v1tot[i]) < this.getInt(v2tot[i])) {
                 return true;
             }
         }
+        this.plugin.getLogger().log(Level.INFO, "check loop complete, no different found. Checking lengths...");
         if (v1tot.length != v2tot.length) {
             return v1tot.length < v2tot.length;
         }
@@ -246,8 +295,8 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
     /**
      * Gets an integer from a string, or returns 0 if it is not a number
      * 
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      * 
      * @param s The string to convert
      * @return The numeric value, or 0 if there is no comprehensible value
@@ -256,6 +305,7 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
         try {
             return Integer.parseInt(s);
         } catch (NumberFormatException ex) {
+            this.plugin.getLogger().log(Level.SEVERE, "Error parsing input '{0}'!", s);
             return 0;
         }
     }
@@ -263,8 +313,8 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
     /**
      * Gets the {@link JSONObject} from the CurseAPI of the newest project version.
      * 
-     * @since 1.0.0
-     * @version 1.0.0
+     * @since 1.4.5
+     * @version 1.4.5
      */
     private void getJSON() {
         InputStream stream = null;
