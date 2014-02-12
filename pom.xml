@@ -32,7 +32,7 @@
                 </includes>
             </resource>
         </resources>
-        <finalName>${project.artifactId}-${project.version}</finalName>
+        <finalName>${project.artifactId}</finalName>
     </build>
   
     <dependencies>
