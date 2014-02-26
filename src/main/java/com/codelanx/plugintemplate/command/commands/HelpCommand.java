@@ -1,22 +1,25 @@
 /*
- * Copyright (C) 2013 Spencer Alderman
+ * Copyright (C) 2013 CodeLanx , All Rights Reserved
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * This work is licensed under a Creative Commons
+ * Attribution-NonCommercial-NoDerivs 3.0 Unported License.
  *
+ * This program is protected software: You are free to distrubute your
+ * own use of this software under the terms of the Creative Commons BY-NC-ND
+ * license as published by Creative Commons in the year 2014 or as published
+ * by a later date. You may not provide the source files or provide a means
+ * of running the software outside of those licensed to use it.
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * 
+ * You should have received a copy of the Creative Commons BY-NC-ND license
+ * along with this program. If not, see <https://creativecommons.org/licenses/>.
  */
-package com.rogue.plugintemplate.command.commands;
+package com.codelanx.plugintemplate.command.commands;
 
-import com.rogue.plugintemplate.PluginTemplate;
+import com.codelanx.plugintemplate.PluginTemplate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
