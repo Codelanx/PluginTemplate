@@ -277,18 +277,13 @@ class UpdateRunnable extends UpdateHandler implements Runnable {
      * @return True if v2 is newer, false otherwise
      */
     private boolean newVersion(String v1, String v2) {
-        this.plugin.getLogger().log(Level.INFO, "Original version: {0}", v1);
-        this.plugin.getLogger().log(Level.INFO, "New version: {0}", v2);
         String[] v1tot = v1.split("\\.");
         String[] v2tot = v2.split("\\.");
-        this.plugin.getLogger().log(Level.INFO, "Running check loop...");
         for (int i = 0; i < v1tot.length && i < v2tot.length; i++) {
-            this.plugin.getLogger().log(Level.INFO, "Comparing {0} to {1}", new String[]{v1tot[i], v2tot[i]});
             if (this.getInt(v1tot[i]) < this.getInt(v2tot[i])) {
                 return true;
             }
         }
-        this.plugin.getLogger().log(Level.INFO, "check loop complete, no different found. Checking lengths...");
         if (v1tot.length != v2tot.length) {
             return v1tot.length < v2tot.length;
         }
