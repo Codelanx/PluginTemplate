@@ -5,6 +5,7 @@
     <artifactId>PluginTemplate</artifactId>
     <version>1.0.0</version>
     <name>PluginTemplate</name>
+    <packaging>jar</packaging>
   
     <repositories>
         <repository>
@@ -19,17 +20,13 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-    <packaging>jar</packaging>
   
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
+                <targetPath>.</targetPath>
+                <directory>${basedir}/src/main/resources</directory>
                 <filtering>true</filtering>
-                <includes>
-                    <include>plugin.yml</include>
-                    <include>config.yml</include>
-                </includes>
             </resource>
         </resources>
         <finalName>${project.artifactId}</finalName>
@@ -39,13 +36,15 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.7.2-R0.2</version>
+            <version>LATEST</version>
             <type>jar</type>
         </dependency>
     </dependencies>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
   
 </project>
